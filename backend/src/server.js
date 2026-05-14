@@ -10,6 +10,9 @@ const PORT = process.env.PORT || 3000;
 
 connectDb();
 
+//middleware
+app.use(express.json());
+
 app.use("/api/puzzles", puzzleRoutes);
 
 app.listen(PORT, () => {
