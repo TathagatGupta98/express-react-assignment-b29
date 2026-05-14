@@ -1,23 +1,19 @@
 import Puzzle from "../models/Puzzle.js";
 
-const getPuzzle = async (req, res) => {
+const getPuzzleByLevel = async (req, res) => {
     try {
-        const puzzle = await Puzzle.find();
-        res.status(200).json(puzzle); 
+        const puzzle = await Puzzle.find({ level: req.params.level });
+        res.status(200).json(puzzle);
     } catch (error) {
         console.error("Error fetching puzzle:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 };
 
-const getPuzzleAnswer = (req, res) => {
-    res.status(200).send("Here is your puzzle answer");
-};
-
 const createPuzzle = async (req, res) => {
     try {
-        const { question, answer } = req.body;
-        const newPuzzle = new Puzzle({ question, answer });
+        const { level, question, answer, hint } = req.body;
+        const newPuzzle = new Puzzle({ level, question, answer, hint });
         await newPuzzle.save();
         res.status(201).json(newPuzzle);
 
@@ -29,10 +25,10 @@ const createPuzzle = async (req, res) => {
 
 const updatePuzzle = async (req, res) => {
     try {
-        const {question, answer} = req.body;
+        const {question, answer, hint} = req.body;
         const updatedPuzzle = await Puzzle.findByIdAndUpdate(
             req.params.id,
-            {question, answer},
+            {question, answer, hint},
             {new: true}
         );
         if (!updatedPuzzle) {
@@ -59,4 +55,4 @@ const deletePuzzle = async (req, res) => {
     }
 };
 
-export { getPuzzle, getPuzzleAnswer, createPuzzle, updatePuzzle, deletePuzzle };
+export { getPuzzleByLevel, createPuzzle, updatePuzzle, deletePuzzle };

@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
 
-// Define the Puzzle schema
-// Make a model from the schema and export it
-
 const puzzleSchema = new mongoose.Schema(
     {
+        level: {
+            type: Number,
+            required: true
+        },
         question: {
             type: String,
             required: true
@@ -12,10 +13,13 @@ const puzzleSchema = new mongoose.Schema(
         answer: {
             type: String,
             required: true
+        },
+        hint: {
+            type: String,
+            required: true,
+            min: 1,
+            max: 10
         }
-    },
-    {
-        timestamps: true
     }
 );
 
