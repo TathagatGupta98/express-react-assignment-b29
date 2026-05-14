@@ -1,10 +1,18 @@
 import express from "express";
 import puzzleRoutes from "./routes/puzzleRoutes.js";
+import { connectDb } from "./config/db.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+connectDb();
 
 app.use("/api/puzzles", puzzleRoutes);
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
+
