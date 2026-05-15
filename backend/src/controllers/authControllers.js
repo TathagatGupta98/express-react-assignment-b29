@@ -1,6 +1,6 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 const generateToken = (userId) => {
     return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
@@ -8,11 +8,11 @@ const generateToken = (userId) => {
     });
 };
 
-const signup = async (req, res) => {
+const registerUser = async (req, res) => {
     try {
         const { username, password } = req.body;
 
-        userExists = await User.findOne({ username });
+        const userExists = await User.findOne({ username });
         if (userExists) {
             return res.status(400).json({ message: "Username already exists" });
         }
@@ -27,11 +27,11 @@ const signup = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ message: "Error creating user" });
+        res.status(500).json({ message: "Error creating user", error: error.message });
     }
 };
 
-const login = async (req, res) => {
+const loginUser = async (req, res) => {
     try {
         const { username, password } = req.body;
         const user = await User.findOne({ username });
@@ -55,3 +55,5 @@ const login = async (req, res) => {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 }
+
+export { registerUser, loginUser };

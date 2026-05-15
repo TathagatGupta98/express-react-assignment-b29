@@ -1,19 +1,48 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext"; 
 
 export default function Auth() {
     const [isLogin, setIsLogin] = useState(true);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState(""); 
+    const [isLoading, setIsLoading] = useState(false); 
+
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // TODO: Send username and password to your Express API here
-        console.log("Submitting:", { username, password, type: isLogin ? "Login" : "Signup" });
+    const { login } = useContext(AuthContext);
 
-        // Simulate successful login and redirect to game
-        navigate("/game");
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError(""); 
+        setIsLoading(true);
+
+        const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
+
+        try {
+            const response = await fetch(`http://localhost:3000${endpoint}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Something went wrong");
+            }
+
+            login(data.token);
+            navigate("/game");
+            setIsLoading(false);
+
+        } catch (error) {
+            setError(error.message);
+            setIsLoading(false);
+        } 
     };
 
     return (
@@ -21,6 +50,12 @@ export default function Auth() {
             <h2 className="text-2xl font-bold text-center mb-6">
                 {isLogin ? "Welcome Back" : "Create an Account"}
             </h2>
+
+            {error && (
+                <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-center font-semibold">
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -45,15 +80,21 @@ export default function Auth() {
                     />
                 </div>
 
-                <button className="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700">
-                    {isLogin ? "Login" : "Sign Up"}
+                <button
+                    disabled={isLoading}
+                    className="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 disabled:bg-blue-400"
+                >
+                    {isLoading ? "Please wait..." : (isLogin ? "Login" : "Sign Up")}
                 </button>
             </form>
 
             <p className="text-center mt-4 text-gray-600">
                 {isLogin ? "Don't have an account? " : "Already have an account? "}
                 <button
-                    onClick={() => setIsLogin(!isLogin)}
+                    onClick={() => {
+                        setIsLogin(!isLogin);
+                        setError(""); 
+                    }}
                     className="text-blue-600 font-bold hover:underline"
                 >
                     {isLogin ? "Sign Up" : "Login"}
