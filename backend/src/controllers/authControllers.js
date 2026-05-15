@@ -56,4 +56,16 @@ const loginUser = async (req, res) => {
     }
 }
 
-export { registerUser, loginUser };
+const getLeaderboard = async (req, res) => {
+    try {
+        const leaderboard = await User.find({}, "username score")
+                                      .sort({ score: -1 })
+        
+        res.status(200).json(leaderboard);
+    } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+        res.status(500).json({ message: "Failed to fetch leaderboard" });
+    }
+};
+
+export { registerUser, loginUser, getLeaderboard };
