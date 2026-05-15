@@ -11,6 +11,14 @@ const userSchema = new mongoose.Schema(
         password: {
             type: String,
             required: true
+        },
+        score: {
+            type: Number,
+            default: 0
+        },
+        puzzlesSolved: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: "Puzzle",
         }
     }
 );

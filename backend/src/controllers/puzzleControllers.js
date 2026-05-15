@@ -1,4 +1,55 @@
 import Puzzle from "../models/Puzzle.js";
+import User from "../models/User.js";
+import mongoose from "mongoose";
+
+const savePuzzleProgress = async (req, res) => {
+    try {
+        const userId = req.user._id || req.user.id;
+        const incomingPuzzleId = String(req.params.id).trim();
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (!user.puzzlesSolved) {
+            user.puzzlesSolved = [];
+        }
+
+        const hasSolved = user.puzzlesSolved.some(
+            (savedId) => String(savedId).trim() === incomingPuzzleId
+        );
+
+        if (hasSolved) {
+            return res.status(200).json({ 
+                message: "Puzzle already solved.",
+                score: user.score || 0
+            });
+        }
+
+        const puzzle = await Puzzle.findById(incomingPuzzleId);
+        if (!puzzle) {
+            return res.status(404).json({ message: "Puzzle not found." });
+        }
+
+        let pointsEarned = 10;
+        if (puzzle.difficulty === "Medium") pointsEarned = 20;
+        if (puzzle.difficulty === "Hard") pointsEarned = 30;
+
+        user.score = (user.score || 0) + pointsEarned;
+        user.puzzlesSolved.push(new mongoose.Types.ObjectId(incomingPuzzleId)); 
+        
+        await user.save();
+
+        return res.status(200).json({ 
+            message: `Correct! You earned ${pointsEarned} points.`, 
+            score: user.score 
+        });
+
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 const getPuzzleByDifficulty = async (req, res) => {
     try {
@@ -58,4 +109,4 @@ const deletePuzzle = async (req, res) => {
     }
 };
 
-export { getPuzzleByDifficulty, createPuzzle, updatePuzzle, deletePuzzle };
+export { getPuzzleByDifficulty, createPuzzle, updatePuzzle, deletePuzzle, savePuzzleProgress };
