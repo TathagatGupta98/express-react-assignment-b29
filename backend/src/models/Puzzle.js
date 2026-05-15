@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 
 const puzzleSchema = new mongoose.Schema(
     {
-        level: {
-            type: Number,
+        difficulty: {
+            type: String,
             required: true
         },
         question: {

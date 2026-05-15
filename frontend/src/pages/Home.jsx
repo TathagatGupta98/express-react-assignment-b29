@@ -1,7 +1,19 @@
+import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Home() {
     const navigate = useNavigate();
+    
+    const { token } = useContext(AuthContext); 
+
+    const handlePlayClick = () => {
+        if (token) {
+            navigate("/game"); 
+        } else {
+            navigate("/auth"); 
+        }
+    };
 
     return (
         <div className="flex flex-col items-center justify-center mt-20 text-center space-y-6">
@@ -20,7 +32,7 @@ export default function Home() {
 
             <div className="space-x-4 mt-8">
                 <button
-                    onClick={() => navigate("/game")}
+                    onClick={handlePlayClick} 
                     className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition"
                 >
                     Play Now

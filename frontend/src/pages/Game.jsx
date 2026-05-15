@@ -1,82 +1,81 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Game() {
-    const [guess, setGuess] = useState("");
-    const [failedAttempts, setFailedAttempts] = useState(0);
-    const [showHint, setShowHint] = useState(false);
-    const [feedback, setFeedback] = useState("");
+  const { token } = useContext(AuthContext);
+  
+  const [difficulty, setDifficulty] = useState("Easy");
+  const [puzzle, setPuzzle] = useState(null); 
+  const [guess, setGuess] = useState("");
+  const [attempts, setAttempts] = useState(0);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
-    // Mock puzzle data (Replace with API call in useEffect)
-    const puzzle = {
-        id: 1,
-        difficulty: "Medium",
-        question: "A billionaire beats up the mentally ill while wearing a rubber suit.",
-        hint: "It takes place in Gotham."
-    };
+  const fetchPuzzle = async (level) => {
+    setPuzzle(null); 
+    setGuess(""); setAttempts(0); setIsCorrect(false); setShowHint(false);
 
-    const handleGuess = (e) => {
-        e.preventDefault();
-        // TODO: Send guess to your API to check if it's correct
+    const res = await fetch(`http://localhost:3000/api/puzzles/${level}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    setPuzzle(res.ok ? await res.json() : false); 
+  };
 
-        // MOCK LOGIC for demonstration:
-        if (guess.toLowerCase() === "the dark knight") {
-            setFeedback("Correct! Progress saved.");
-            setFailedAttempts(0); // reset on win
-        } else {
-            setFeedback("Incorrect. Try again.");
-            setFailedAttempts(prev => prev + 1);
-        }
-    };
+  useEffect(() => { fetchPuzzle(difficulty); }, [difficulty]);
 
-    return (
-        <div className="max-w-2xl mx-auto mt-10 bg-white p-8 rounded shadow-md">
-            <div className="flex justify-between items-center mb-6 text-sm font-bold text-gray-500 uppercase tracking-wide">
-                <span>Difficulty: {puzzle.difficulty}</span>
-                <span>Attempts: {failedAttempts}</span>
-            </div>
+  const handleGuess = (e) => {
+    e.preventDefault();
+    if (guess.toLowerCase() === puzzle.answer.toLowerCase()) {
+      setIsCorrect(true);
+    } else {
+      setAttempts(a => a + 1); 
+    }
+  };
 
-            <h2 className="text-2xl font-semibold text-center mb-8 text-gray-800">
-                "{puzzle.question}"
-            </h2>
+  if (puzzle === null) return <p className="text-center mt-20 text-xl font-bold animate-pulse">Loading...</p>;
+  if (puzzle === false) return <p className="text-center mt-20 text-red-500 font-bold">No puzzles found.</p>;
 
-            <form onSubmit={handleGuess} className="flex flex-col space-y-4">
-                <input
-                    type="text"
-                    placeholder="Enter movie title..."
-                    value={guess}
-                    onChange={(e) => setGuess(e.target.value)}
-                    className="w-full border-2 border-gray-300 rounded p-3 text-lg focus:outline-none focus:border-blue-500"
-                />
+  return (
+    <div className="max-w-2xl mx-auto mt-10 bg-white p-8 rounded shadow-md text-center">
+      
+      <div className="flex justify-center space-x-4 mb-6">
+        {["Easy", "Medium", "Hard"].map((lvl) => (
+          <button key={lvl} onClick={() => setDifficulty(lvl)} className={`px-4 py-2 font-bold rounded ${difficulty === lvl ? "bg-blue-600 text-white" : "bg-gray-200"}`}>
+            {lvl}
+          </button>
+        ))}
+      </div>
 
-                <button type="submit" className="bg-blue-600 text-white py-3 rounded font-bold text-lg hover:bg-blue-700">
-                    Submit Guess
-                </button>
-            </form>
+      <p className="text-gray-500 font-bold mb-4 uppercase text-sm tracking-widest">Attempts: {attempts}</p>
+      <h2 className="text-2xl font-semibold mb-6 text-gray-800">"{puzzle.question}"</h2>
 
-            {/* Feedback Message */}
-            {feedback && (
-                <p className={`mt-4 text-center font-bold ${feedback.includes("Correct") ? "text-green-600" : "text-red-500"}`}>
-                    {feedback}
-                </p>
-            )}
+      <form onSubmit={handleGuess} className="flex flex-col space-y-4">
+        <input 
+          type="text" value={guess} onChange={(e) => setGuess(e.target.value)} 
+          className="border-2 p-3 rounded text-lg border-gray-300" placeholder="Movie title..." 
+        />
+        <button className="bg-blue-600 text-white py-3 rounded font-bold hover:bg-blue-700">Submit</button>
+      </form>
 
-            {/* Hint Logic: Only show button if 3 or more failed attempts */}
-            {failedAttempts >= 3 && (
-                <div className="mt-8 pt-6 border-t text-center">
-                    {!showHint ? (
-                        <button
-                            onClick={() => setShowHint(true)}
-                            className="bg-yellow-400 text-yellow-900 px-4 py-2 rounded font-bold hover:bg-yellow-500"
-                        >
-                            Need a Hint?
-                        </button>
-                    ) : (
-                        <p className="bg-yellow-100 p-4 rounded text-yellow-800 italic">
-                            Hint: {puzzle.hint}
-                        </p>
-                    )}
-                </div>
-            )}
+      {isCorrect && (
+        <div className="mt-6">
+          <p className="text-green-600 font-bold text-xl mb-4">Correct!</p>
+          <button onClick={() => fetchPuzzle(difficulty)} className="bg-green-500 text-white px-6 py-2 rounded font-bold">Next Puzzle</button>
         </div>
-    );
+      )}
+
+      {attempts > 0 && !isCorrect && <p className="text-red-500 font-bold mt-4">Incorrect. Try again.</p>}
+
+      {attempts >= 3 && !isCorrect && (
+        <div className="mt-6 pt-4 border-t">
+          {!showHint ? (
+            <button onClick={() => setShowHint(true)} className="bg-yellow-400 font-bold px-4 py-2 rounded">Need a Hint?</button>
+          ) : (
+            <p className="bg-yellow-100 text-yellow-800 p-3 rounded italic">Hint: {puzzle.hint}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }

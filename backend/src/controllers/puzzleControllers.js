@@ -1,9 +1,12 @@
 import Puzzle from "../models/Puzzle.js";
 
-const getPuzzleByLevel = async (req, res) => {
+const getPuzzleByDifficulty = async (req, res) => {
     try {
-        const puzzle = await Puzzle.find({ level: req.params.level });
-        res.status(200).json(puzzle);
+        const puzzles = await Puzzle.aggregate([
+            { $match: { difficulty: req.params.difficulty } },
+            { $sample: { size: 1 } }
+        ]);
+        res.status(200).json(puzzles[0]);
     } catch (error) {
         console.error("Error fetching puzzle:", error);
         res.status(500).json({ message: "Internal server error" });
@@ -12,8 +15,8 @@ const getPuzzleByLevel = async (req, res) => {
 
 const createPuzzle = async (req, res) => {
     try {
-        const { level, question, answer, hint } = req.body;
-        const newPuzzle = new Puzzle({ level, question, answer, hint });
+        const { difficulty, question, answer, hint } = req.body;
+        const newPuzzle = new Puzzle({ difficulty, question, answer, hint });
         await newPuzzle.save();
         res.status(201).json(newPuzzle);
 
@@ -55,4 +58,4 @@ const deletePuzzle = async (req, res) => {
     }
 };
 
-export { getPuzzleByLevel, createPuzzle, updatePuzzle, deletePuzzle };
+export { getPuzzleByDifficulty, createPuzzle, updatePuzzle, deletePuzzle };
